@@ -1,0 +1,39 @@
+{
+  "name": "bot-busca-vagas",
+  "version": "1.0.0",
+  "description": "Bot para buscar vagas de emprego em diversas plataformas",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "dev:start": "npm run build && npm start",
+    "prebuild": "mkdir -p dist",
+    "build": "tsc",
+    "postinstall": "npm run build",
+    "lint": "eslint src --ext .ts",
+    "test": "jest"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "date-fns": "^2.30.0",
+    "dotenv": "^16.3.1",
+    "node-cron": "^3.0.2",
+    "nodemailer": "^6.9.7",
+    "puppeteer": "^24.6.0",
+    "readline-sync": "^1.4.10"
+  },
+  "devDependencies": {
+    "@types/axios": "^0.14.0",
+    "@types/cheerio": "^0.22.35",
+    "@types/node": "^20.9.0",
+    "@types/node-cron": "^3.0.10",
+    "@types/nodemailer": "^6.4.14",
+    "@types/puppeteer": "^7.0.4",
+    "@types/readline-sync": "^1.4.7",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
+  },
+  "author": "Vitor Nunes",
+  "license": "MIT"
+}

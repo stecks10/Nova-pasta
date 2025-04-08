@@ -1,0 +1,6 @@
+node_modules/
+dist/
+output/
+.env
+vagas.csv
+vagas.html
