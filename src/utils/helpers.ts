@@ -16,19 +16,48 @@ export const delay = (ms: number): Promise<void> =>
 export function isJobInBrazil(location: string | undefined): boolean {
   if (!location) return false;
 
-  const local = location.toLowerCase();
-  return (
-    local.includes("brasil") ||
-    local.includes("brazil") ||
-    local.includes("remoto") ||
-    local.includes("remote") ||
-    local.includes("sp,") ||
-    local.includes("rj,") ||
-    local.includes("mg,") ||
-    local.includes("são paulo") ||
-    local.includes("rio de janeiro") ||
-    (!local.includes("usa") && !local.includes("united states"))
-  );
+  const brPatterns = [
+    /brasil/i,
+    /brazil/i,
+    /são paulo/i,
+    /sao paulo/i,
+    /rio de janeiro/i,
+    /belo horizonte/i,
+    /brasília/i,
+    /brasilia/i,
+    /curitiba/i,
+    /salvador/i,
+    /porto alegre/i,
+    /recife/i,
+    /sp/i,
+    /rj/i,
+    /mg/i,
+    /pr/i,
+    /ba/i,
+    /rs/i,
+    /pe/i,
+  ];
+
+  return brPatterns.some((pattern) => pattern.test(location));
+}
+
+// Verifica se a vaga é remota
+export function isRemoteJob(location: string): boolean {
+  if (!location) return false;
+
+  const remotePatterns = [
+    /remot[eo]/i,
+    /home\s*office/i,
+    /trabalho\s*remoto/i,
+    /trabalho\s*à\s*distância/i,
+    /trabalho\s*a\s*distância/i,
+    /anywhere/i,
+    /qualquer\s*lugar/i,
+    /híbrido/i,
+    /hibrido/i,
+  ];
+
+  return remotePatterns.some((pattern) => pattern.test(location));
 }
 
 // Verifica se a vaga foi publicada nos últimos X dias

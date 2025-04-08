@@ -1,6 +1,11 @@
 import puppeteer, { Page } from "puppeteer";
 import { SearchResult, JobListing } from "../types";
-import { getRandomUserAgent, delay, isJobInBrazil } from "../utils/helpers";
+import {
+  getRandomUserAgent,
+  delay,
+  isJobInBrazil,
+  isRemoteJob,
+} from "../utils/helpers";
 import { subDays, format } from "date-fns";
 import { waitFor, autoScroll } from "../utils/puppeteerUtils";
 
@@ -18,7 +23,9 @@ export async function searchLinkedInJobs(
   experiencia: string,
   diasRecentes: number
 ): Promise<SearchResult> {
-  console.log(`\n🔍 Buscando vagas no LinkedIn para: ${cargo} - ${local}`);
+  console.log(
+    `\n🔍 Buscando vagas remotas no LinkedIn para: ${cargo} - ${local}`
+  );
 
   // Cálculo da data limite para filtrar vagas
   const limitDate = subDays(new Date(), diasRecentes);
@@ -44,11 +51,12 @@ export async function searchLinkedInJobs(
     const expCode =
       experiencia === "Júnior" ? "1" : experiencia === "Pleno" ? "2" : "3";
 
+    // Adiciona filtro de trabalho remoto (f_WT=2)
     const url = `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(
       cargo
     )}&location=${encodeURIComponent(
       local
-    )}&f_E=${expCode}&geoId=106057199&f_TPR=r${diasRecentes}d`;
+    )}&f_E=${expCode}&geoId=106057199&f_WT=2&f_TPR=r${diasRecentes}d`;
 
     await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
 
@@ -107,7 +115,7 @@ export async function searchLinkedInJobs(
 
     vagas.forEach((vaga: LinkedInJob) => {
       if (vaga.title && vaga.company && vaga.link) {
-        if (isJobInBrazil(vaga.location)) {
+        if (isJobInBrazil(vaga.location) || isRemoteJob(vaga.location)) {
           const jobListing: JobListing = {
             Fonte: "LinkedIn",
             Título: vaga.title,

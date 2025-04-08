@@ -8,7 +8,7 @@ import { delay, removeDuplicateJobs, isRecentJob } from "./utils/helpers";
 import { JobListing } from "./types";
 
 async function buscarVagas(): Promise<void> {
-  console.log("🔍 Iniciando busca de vagas no Brasil...");
+  console.log("🔍 Iniciando busca de vagas remotas no Brasil...");
   const resultados: JobListing[] = [];
 
   // Limitar o número de requisições simultâneas
@@ -29,7 +29,7 @@ async function buscarVagas(): Promise<void> {
     // Executa cada lote em paralelo
     const resultadosLote = await Promise.all(
       lote.map(async ({ cargo, local }) => {
-        console.log(`\n🔍 Buscando vagas para: ${cargo} - ${local}`);
+        console.log(`\n🔍 Buscando vagas remotas para: ${cargo} - ${local}`);
 
         const loteResultados: JobListing[] = [];
 
@@ -89,7 +89,7 @@ async function buscarVagas(): Promise<void> {
   // Salvar resultados
   if (vagasRecentes.length > 0) {
     console.log(
-      `\n🎉 Encontramos ${vagasRecentes.length} vagas únicas recentes no Brasil!`
+      `\n🎉 Encontramos ${vagasRecentes.length} vagas remotas únicas recentes no Brasil!`
     );
 
     // Salvar no formato desejado (CSV, HTML ou ambos)
@@ -100,7 +100,7 @@ async function buscarVagas(): Promise<void> {
       await applyToJobs(vagasRecentes.slice(0, 5), MEU_PERFIL); // Aplica nas 5 primeiras
     }
   } else {
-    console.log("\n😢 Nenhuma vaga recente encontrada");
+    console.log("\n😢 Nenhuma vaga remota recente encontrada");
   }
 }
 

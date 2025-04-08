@@ -1,6 +1,10 @@
 import puppeteer, { Page } from "puppeteer";
 import { SearchResult, JobListing } from "../types";
-import { getRandomUserAgent, isJobInBrazil } from "../utils/helpers";
+import {
+  getRandomUserAgent,
+  isJobInBrazil,
+  isRemoteJob,
+} from "../utils/helpers";
 import { subDays } from "date-fns";
 import { waitFor, autoScroll } from "../utils/puppeteerUtils";
 
@@ -17,7 +21,9 @@ export async function searchIndeedJobs(
   local: string,
   diasRecentes: number
 ): Promise<SearchResult> {
-  console.log(`\n🔍 Buscando vagas no Indeed para: ${cargo} - ${local}`);
+  console.log(
+    `\n🔍 Buscando vagas remotas no Indeed para: ${cargo} - ${local}`
+  );
 
   const browser = await puppeteer.launch({
     headless: true, // Corrigido de "new" para true
@@ -35,10 +41,12 @@ export async function searchIndeedJobs(
   };
 
   try {
-    // Adicionar filtro de data à URL
+    // Adicionar filtro de data e remoto à URL
     const indeedURL = `https://br.indeed.com/jobs?q=${encodeURIComponent(
       cargo
-    )}&l=${encodeURIComponent(local)}&fromage=${diasRecentes}`;
+    )}+remoto&l=${encodeURIComponent(
+      local
+    )}&sc=0kf%3Ajt%28remote%29%3B&fromage=${diasRecentes}`;
 
     await page.goto(indeedURL, { waitUntil: "networkidle2", timeout: 30000 });
     await waitFor(page, 2000);
@@ -93,9 +101,12 @@ export async function searchIndeedJobs(
 
     const currentDate = new Date().toLocaleDateString();
 
-    // Filtrar apenas vagas brasileiras
+    // Filtrar apenas vagas brasileiras e remotas
     indeedVagas.forEach((vaga: IndeedJob) => {
-      if (vaga.local && isJobInBrazil(vaga.local)) {
+      if (
+        vaga.local &&
+        (isJobInBrazil(vaga.local) || isRemoteJob(vaga.local))
+      ) {
         const jobListing: JobListing = {
           Fonte: "Indeed",
           Título: vaga.titulo,
