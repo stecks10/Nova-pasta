@@ -1,4 +1,4 @@
-import puppeteer, { Page, Frame } from "puppeteer";
+import puppeteer, { Page, Frame, ElementHandle } from "puppeteer";
 import { JobListing, UserProfile } from "../types";
 import { getRandomUserAgent, delay } from "../utils/helpers";
 import { waitFor } from "../utils/puppeteerUtils";
@@ -87,8 +87,9 @@ async function applyLinkedIn(
     }
 
     // Verifica se o botão está visível e clicável antes de clicar
-    const isVisible: boolean = await applyButton.evaluate((el: HTMLElement) => {
-      const style: CSSStyleDeclaration = window.getComputedStyle(el);
+    // Corrige a tipagem para evitar erros com HTMLElement
+    const isVisible = await applyButton.evaluate((element) => {
+      const style = window.getComputedStyle(element);
       return (
         style &&
         style.display !== "none" &&
