@@ -210,27 +210,151 @@ export function saveToHTML(
   }
 }
 
-export function saveResults(
+export function saveToReadme(
   jobs: JobListing[],
-  config: { format: "csv" | "html" | "ambos" }
+  filePath: string = "README.md"
 ): void {
-  // Criar diretório de saída se não existir
-  const outputDir = path.resolve("./output");
+  try {
+    // Agrupar por cargo alvo para estatísticas
+    const jobsByRole: Record<string, JobListing[]> = {};
+    const jobsBySource: Record<string, number> = {};
+
+    jobs.forEach((job) => {
+      // Agrupar por cargo
+      if (!jobsByRole[job.CargoAlvo]) {
+        jobsByRole[job.CargoAlvo] = [];
+      }
+      jobsByRole[job.CargoAlvo].push(job);
+
+      // Contabilizar por fonte
+      if (!jobsBySource[job.Fonte]) {
+        jobsBySource[job.Fonte] = 0;
+      }
+      jobsBySource[job.Fonte]++;
+    });
+
+    // Criando conteúdo do README
+    let content = `# Relatório de Vagas de Emprego\n\n`;
+    content += `## Resumo\n\n`;
+    content += `- **Total de vagas encontradas:** ${jobs.length}\n`;
+    content += `- **Categorias de cargo:** ${Object.keys(jobsByRole).length}\n`;
+    content += `- **Data da geração:** ${new Date().toLocaleDateString(
+      "pt-BR"
+    )}\n\n`;
+
+    content += `## Distribuição por Categoria\n\n`;
+    Object.keys(jobsByRole).forEach((role) => {
+      content += `- **${role}:** ${jobsByRole[role].length} vagas\n`;
+    });
+
+    content += `\n## Distribuição por Fonte\n\n`;
+    Object.keys(jobsBySource).forEach((source) => {
+      content += `- **${source}:** ${jobsBySource[source]} vagas\n`;
+    });
+
+    content += `\n## Arquivos Gerados\n\n`;
+    content += `- [Lista de Vagas em CSV](./vagas.csv)\n`;
+    content += `- [Lista de Vagas em HTML](./vagas.html)\n`;
+
+    content += `\n## Como Utilizar\n\n`;
+    content += `Este relatório foi gerado automaticamente pelo rastreador de vagas. `;
+    content += `Para visualizar os detalhes completos, abra o arquivo HTML para uma experiência interativa `;
+    content += `ou o arquivo CSV para manipulação em planilhas eletrônicas.\n`;
+
+    fs.writeFileSync(filePath, content);
+    console.log(`✅ README.md gerado com sucesso: ${filePath}`);
+  } catch (error) {
+    console.error(
+      `❌ Erro ao gerar README.md: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
+}
+
+interface SaveOptions {
+  format: "csv" | "html" | "markdown" | "all";
+  outputDir?: string;
+}
+
+export function saveResults(jobs: JobListing[], options: SaveOptions): void {
+  const outputDir = options.outputDir || "./resultados";
+
+  // Criar diretório se não existir
   if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir);
+    fs.mkdirSync(outputDir, { recursive: true });
   }
 
-  const timestamp = new Date().toISOString().replace(/:/g, "-").split(".")[0];
+  const now = new Date();
+  const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}-${String(now.getDate()).padStart(2, "0")}_${String(
+    now.getHours()
+  ).padStart(2, "0")}-${String(now.getMinutes()).padStart(2, "0")}`;
 
-  if (config.format === "csv" || config.format === "ambos") {
+  // Salvar em Markdown
+  if (options.format === "markdown" || options.format === "all") {
+    const mdContent = generateMarkdown(jobs);
+    const mdFilePath = path.join(outputDir, `vagas_remotas_${timestamp}.md`);
+    fs.writeFileSync(mdFilePath, mdContent, "utf8");
+    console.log(`✅ Lista de vagas salva em Markdown: ${mdFilePath}`);
+  }
+
+  // Salvar em CSV
+  if (options.format === "csv" || options.format === "all") {
     saveToCSV(jobs, path.join(outputDir, `vagas_${timestamp}.csv`));
     // Também salvar na raiz para compatibilidade com o código anterior
     saveToCSV(jobs);
   }
 
-  if (config.format === "html" || config.format === "ambos") {
+  // Salvar em HTML
+  if (options.format === "html" || options.format === "all") {
     saveToHTML(jobs, path.join(outputDir, `vagas_${timestamp}.html`));
     // Também salvar na raiz
     saveToHTML(jobs);
   }
+
+  // Gerar README.md
+  saveToReadme(jobs, path.join(outputDir, `README.md`));
+  // Também salvar na raiz
+  saveToReadme(jobs);
+}
+
+function generateMarkdown(jobs: JobListing[]): string {
+  let markdown = "# 🔍 Vagas Remotas Encontradas\n\n";
+  markdown += `*Atualizado em: ${new Date().toLocaleString("pt-BR")}*\n\n`;
+
+  // Adicionar estatísticas
+  markdown += "## 📊 Resumo\n\n";
+  markdown += `- **Total de vagas encontradas:** ${jobs.length}\n`;
+
+  // Contagem por fonte
+  const fontes = jobs.reduce((acc, job) => {
+    acc[job.Fonte] = (acc[job.Fonte] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  markdown += "- **Vagas por fonte:**\n";
+  for (const [fonte, count] of Object.entries(fontes)) {
+    markdown += `  - ${fonte}: ${count}\n`;
+  }
+
+  markdown += "\n## 💼 Lista de Vagas\n\n";
+
+  jobs.forEach((job, index) => {
+    const dataFormatada = job.DataPublicacao
+      ? new Date(job.DataPublicacao).toLocaleDateString("pt-BR")
+      : job.Data;
+
+    markdown += `### ${index + 1}. ${job.Título}\n\n`;
+    markdown += `- **Empresa:** ${job.Empresa}\n`;
+    markdown += `- **Local:** ${job.Local}\n`;
+    markdown += `- **Data de Publicação:** ${dataFormatada}\n`;
+    markdown += `- **Fonte:** ${job.Fonte}\n`;
+    markdown += `- **Link:** [Acessar vaga](${job.Link})\n\n`;
+    markdown += `---\n\n`;
+  });
+
+  return markdown;
 }

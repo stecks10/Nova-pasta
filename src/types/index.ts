@@ -2,11 +2,11 @@ export interface UserConfig {
   habilidades: string[];
   cargosDesejados: string[];
   localizacoes: string[];
-  experiencia: "Júnior" | "Pleno" | "Sênior";
+  experiencia: "Júnior" | "Pleno";
   candidaturasAutomaticas: boolean;
   buscaDiaria: boolean;
   diasRecentes: number;
-  formatoSaida: "csv" | "html" | "ambos";
+  formatoSaida: "csv" | "html" | "ambos" | "markdown";
 }
 
 export interface UserProfile {

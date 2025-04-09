@@ -41,12 +41,12 @@ export async function searchIndeedJobs(
   };
 
   try {
-    // Adicionar filtro de data e remoto à URL
+    // Modificar a URL para garantir busca de vagas remotas com filtro de data
     const indeedURL = `https://br.indeed.com/jobs?q=${encodeURIComponent(
-      cargo
-    )}+remoto&l=${encodeURIComponent(
+      cargo + " remoto"
+    )}&l=${encodeURIComponent(
       local
-    )}&sc=0kf%3Ajt%28remote%29%3B&fromage=${diasRecentes}`;
+    )}&sc=0kf%3Attr(DSQF7)%3B&fromage=${diasRecentes}`; // Adiciona filtro de data
 
     await page.goto(indeedURL, { waitUntil: "networkidle2", timeout: 30000 });
     await waitFor(page, 2000);

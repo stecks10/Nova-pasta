@@ -32,11 +32,8 @@ export const USER_CONFIG: UserConfig = {
   experiencia: "Pleno", // Júnior, Pleno, Sênior
   candidaturasAutomaticas: true,
   buscaDiaria: true,
-  diasRecentes: parseInt(process.env.DIAS_RECENTES || "7"), // De .env ou padrão 7
-  formatoSaida: (process.env.FORMATO_SAIDA || "ambos") as
-    | "csv"
-    | "html"
-    | "ambos",
+  diasRecentes: 7, // De .env ou padrão 7
+  formatoSaida: "csv", // Atualize para 'csv', 'html' ou 'ambos'
 };
 
 // Dados para autopreenchimento

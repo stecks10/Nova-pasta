@@ -51,6 +51,11 @@ export async function searchLinkedInJobs(
     const expCode =
       experiencia === "Júnior" ? "1" : experiencia === "Pleno" ? "2" : "3";
 
+    // Modificar a URL para incluir filtro de trabalho remoto
+    const linkedinURL = `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(
+      cargo
+    )}&location=${encodeURIComponent(local)}&f_WT=2`; // f_WT=2 é o filtro para trabalho remoto no LinkedIn
+
     // Adiciona filtro de trabalho remoto (f_WT=2)
     const url = `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(
       cargo

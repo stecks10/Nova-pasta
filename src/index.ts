@@ -1,11 +1,45 @@
 import cron from "node-cron";
-import { USER_CONFIG, MEU_PERFIL } from "./config";
-import { searchLinkedInJobs } from "./services/linkedinService";
-import { searchIndeedJobs } from "./services/indeedService";
+import { MEU_PERFIL, USER_CONFIG } from "./config";
 import { applyToJobs } from "./services/applicationService";
+import { searchIndeedJobs } from "./services/indeedService";
+import { searchLinkedInJobs } from "./services/linkedinService";
 import { saveResults } from "./services/output";
-import { delay, removeDuplicateJobs, isRecentJob } from "./utils/helpers";
 import { JobListing } from "./types";
+import { delay, isRecentJob, removeDuplicateJobs } from "./utils/helpers";
+
+// Função para verificar se a vaga tem candidatura simplificada
+function hasCandidaturaSimplificada(job: JobListing): boolean {
+  // Verifica se o link da vaga contém indicadores de candidatura simplificada
+  const linkIndicators = [
+    "easy-apply",
+    "candidatar",
+    "aplicar-agora",
+    "apply-now",
+    "1-click-apply",
+  ];
+
+  if (job.Link) {
+    if (
+      linkIndicators.some((indicator) =>
+        job.Link.toLowerCase().includes(indicator)
+      )
+    ) {
+      return true;
+    }
+  }
+
+  // LinkedIn geralmente tem candidatura simplificada
+  if (job.Fonte === "LinkedIn" && job.Link.includes("jobs/view")) {
+    return true;
+  }
+
+  // Indeed tem candidaturas simplificadas via "Apply Now"
+  if (job.Fonte === "Indeed" && job.Link.includes("from=serp")) {
+    return true;
+  }
+
+  return false;
+}
 
 async function buscarVagas(): Promise<void> {
   console.log("🔍 Iniciando busca de vagas remotas no Brasil...");
@@ -80,27 +114,45 @@ async function buscarVagas(): Promise<void> {
     await delay(5000);
   }
 
-  // Remover duplicatas e filtrar apenas vagas recentes
+  // Remover duplicatas e aplicar filtros:
+  // 1. Filtrar apenas vagas recentes
+  // 2. Mostrar apenas vagas com candidatura simplificada
   const vagasUnicas = removeDuplicateJobs(resultados);
   const vagasRecentes = vagasUnicas.filter((vaga) =>
     isRecentJob(vaga, USER_CONFIG.diasRecentes)
   );
+  const vagasSimplificadas = vagasRecentes.filter(hasCandidaturaSimplificada);
 
-  // Salvar resultados
-  if (vagasRecentes.length > 0) {
+  console.log(`Total de vagas encontradas: ${resultados.length}`);
+  console.log(`Vagas únicas: ${vagasUnicas.length}`);
+  console.log(
+    `Vagas recentes (últimos ${USER_CONFIG.diasRecentes} dias): ${vagasRecentes.length}`
+  );
+  console.log(
+    `Vagas com candidaturas simplificadas: ${vagasSimplificadas.length}`
+  );
+
+  // Salvar resultados - USANDO APENAS VAGAS SIMPLIFICADAS
+  if (vagasSimplificadas.length > 0) {
     console.log(
-      `\n🎉 Encontramos ${vagasRecentes.length} vagas remotas únicas recentes no Brasil!`
+      `\n🎉 Encontramos ${vagasSimplificadas.length} vagas com candidatura simplificada nos últimos ${USER_CONFIG.diasRecentes} dias!`
     );
 
     // Salvar no formato desejado (CSV, HTML ou ambos)
-    saveResults(vagasRecentes, { format: USER_CONFIG.formatoSaida });
+    const outputFormat =
+      (USER_CONFIG.formatoSaida as string) === "csv"
+        ? "all"
+        : USER_CONFIG.formatoSaida;
+    saveResults(vagasSimplificadas, { format: outputFormat });
 
     // Candidatura automática (simplificada)
     if (USER_CONFIG.candidaturasAutomaticas) {
-      await applyToJobs(vagasRecentes.slice(0, 5), MEU_PERFIL); // Aplica nas 5 primeiras
+      await applyToJobs(vagasSimplificadas.slice(0, 5), MEU_PERFIL); // Aplica nas 5 primeiras
     }
   } else {
-    console.log("\n😢 Nenhuma vaga remota recente encontrada");
+    console.log(
+      `\n😢 Nenhuma vaga com candidatura simplificada encontrada nos últimos ${USER_CONFIG.diasRecentes} dias`
+    );
   }
 }
 

@@ -4,7 +4,6 @@
   "description": "Bot para buscar vagas de emprego em diversas plataformas",
   "main": "dist/index.js",
   "scripts": {
-    "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "dev:start": "npm run build && npm start",
     "prebuild": "mkdir -p dist",
